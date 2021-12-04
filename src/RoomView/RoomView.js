@@ -3,6 +3,7 @@ import Header from "../ui/Header";
 import SoftKey from "../ui/SoftKey";
 import { IRCLikeMessageItem } from "../MessageItems";
 import ChatTextInput from "../ChatTextInput";
+import ScrollIntoView from "../ScrollIntoView";
 import "./UnsupportedEventItem.css";
 import "./RoomView.css";
 
@@ -131,6 +132,8 @@ class RoomView extends Component {
               .getEvents()
               .map((evt, index, ary) => {
                 let item = null;
+                let isFocused = !textInputFocus && index === cursor;
+
                 if (evt.getType() === "m.room.message") {
                   item = (
                     <MessageItem
@@ -139,12 +142,20 @@ class RoomView extends Component {
                     />
                   );
                 } else {
-                  item = <UnsupportedEventItem senderId={evt.getSender()} />;
+                  item = (
+                    <UnsupportedEventItem
+                      senderId={evt.getSender()}
+                    />
+                  );
                 }
-                if (item && !textInputFocus) {
-                  item.props.isFocused = index === cursor;
-                }
-                return item;
+
+                if(item) item.props.isFocused = isFocused;
+
+                return (
+                    <ScrollIntoView isFocused={isFocused}>
+                      {item}
+                    </ScrollIntoView>
+                );
               })}
           </div>
           <ChatTextInput
