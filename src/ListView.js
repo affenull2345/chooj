@@ -1,11 +1,15 @@
 import "KaiUI/src/views/ListView/ListView.scss";
 import { Component } from "inferno";
-import { findDOMNode } from "inferno-extras";
+import ScrollIntoView from "./ScrollIntoView";
 
 class ListView extends Component {
   handleKeyDown = (evt) => {
     let cursor = this.state.cursor;
     const { children, cursorChangeCb } = this.props;
+
+    // No navigation is needed when there is only one item (or zero items)
+    if(children.length < 2) return;
+
     if (evt.key === "ArrowUp") {
       cursor--;
       if (cursor === -1) cursor = children.length - 1;
@@ -19,11 +23,10 @@ class ListView extends Component {
       if (cursor >= children.length) cursor = 0;
       // TODO: same as above! ME LAZY Farooq
     }
-    if (children && children[cursor])
-      findDOMNode(children[cursor]).scrollIntoView();
-    this.setState({
-      cursor: cursor,
-    });
+    else return;
+
+    console.log(`[ListView] Arrow key pressed, cursor is now ${cursor}`);
+    this.setState({ cursor });
     cursorChangeCb && cursorChangeCb(cursor);
   };
 
@@ -40,14 +43,12 @@ class ListView extends Component {
       throw new Error("cursor is negative or bigger than length of list");
     }
     if (cursorChangeCb) cursorChangeCb(cursor);
-    this.state = {
-      cursor: cursor,
-    };
+    this.state = { cursor };
   }
 
   componentDidUpdate() {
-    const { cursor, children } = this.props;
-    findDOMNode(children[cursor]).scrollIntoView();
+    const { cursor } = this.props;
+    if(cursor !== this.state.cursor) this.setState({ cursor });
   }
 
   componentDidMount() {
@@ -59,7 +60,14 @@ class ListView extends Component {
   }
 
   render() {
-    const { height, children } = this.props;
+    const { height } = this.props;
+    const { cursor } = this.state;
+
+    let children = this.props.children;
+    if(children && !Array.isArray(children)){
+      children = [children];
+    }
+
     return (
       <div
         className={"kai-list-view"}
@@ -67,7 +75,11 @@ class ListView extends Component {
           height: height || "calc(100vh - 60px)",
         }}
       >
-        {children}
+        {children && children.map((child, i) => (
+          <ScrollIntoView isFocused={i === cursor}>
+            {child}
+          </ScrollIntoView>
+        ))}
       </div>
     );
   }
