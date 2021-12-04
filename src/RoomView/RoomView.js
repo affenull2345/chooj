@@ -48,9 +48,9 @@ class RoomView extends Component {
       if (textInputFocus) {
         this.setState({ textInputFocus: false, cursor: lastEventIndex });
       } else if (cursor === 0) {
-          this.setState({ textInputFocus: true });
+        this.setState({ textInputFocus: true, cursor: lastEventIndex });
       } else {
-          this.setState({ cursor: cursor - 1 });
+        this.setState({ cursor: cursor - 1 });
       }
     }
   };
@@ -108,6 +108,11 @@ class RoomView extends Component {
 
   componentDidMount() {
     document.addEventListener("keydown", this.handleKeyDown);
+    const lastEventIndex = this.room.getLiveTimeline().getEvents().length - 1;
+    this.setState({
+      cursor: lastEventIndex,
+      textInputFocus: true,
+    });
   }
 
   componentWillUnmount() {
@@ -132,7 +137,6 @@ class RoomView extends Component {
               .getEvents()
               .map((evt, index, ary) => {
                 let item = null;
-                let isFocused = !textInputFocus && index === cursor;
 
                 if (evt.getType() === "m.room.message") {
                   item = (
@@ -149,10 +153,16 @@ class RoomView extends Component {
                   );
                 }
 
-                if(item) item.props.isFocused = isFocused;
+                // NOTE: The conditions for scroll and focus are different,
+                // because the last event should be visible even if
+                // the text input is focused
+
+                if (item) {
+                  item.props.isFocused = !textInputFocus && index === cursor;
+                }
 
                 return (
-                    <ScrollIntoView isFocused={isFocused}>
+                    <ScrollIntoView isFocused={index === cursor}>
                       {item}
                     </ScrollIntoView>
                 );
